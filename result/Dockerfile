@@ -1,5 +1,5 @@
 # Use a specific Node.js version and Debian release
-FROM node:18.20.8-slim-bookworm
+FROM node:22-bookworm-slim
 
 # Install curl for health checks and tini for process management
 RUN apt-get update && \
