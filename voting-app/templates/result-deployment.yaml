@@ -5,7 +5,7 @@ metadata:
   labels:
     app: result
 spec:
-  replicas: 1
+  replicas: {{ .Values.result.replicaCount }}
   selector:
     matchLabels:
       app: result
@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
         - name: result
-          image: example-voting-app-git-result:latest
-          imagePullPolicy: IfNotPresent
+          image: "{{ .Values.result.image.repository }}:{{ .Values.result.image.tag }}"
+          imagePullPolicy: {{ .Values.result.image.pullPolicy }}
           ports:
             - containerPort: 8081
               name: http

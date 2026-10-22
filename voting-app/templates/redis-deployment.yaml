@@ -5,7 +5,7 @@ metadata:
   labels:
     app: redis
 spec:
-  replicas: 1
+  replicas: {{ .Values.redis.replicaCount }}
   selector:
     matchLabels:
       app: redis
@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
         - name: redis
-          image: redis:alpine
-          imagePullPolicy: IfNotPresent
+          image: "{{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}"
+          imagePullPolicy: {{ .Values.redis.image.pullPolicy }}
           ports:
             - containerPort: 6379
               name: redis
