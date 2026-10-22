@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis
@@ -24,6 +24,11 @@ spec:
           volumeMounts:
             - name: redis-data
               mountPath: /data
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
       volumes:
         - name: redis-data
           emptyDir: {}

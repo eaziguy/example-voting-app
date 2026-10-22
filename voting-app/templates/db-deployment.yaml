@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: db
@@ -29,6 +29,9 @@ spec:
           volumeMounts:
             - name: db-data
               mountPath: /var/lib/postgresql/data
+          securityContext:
+            allowPrivilegeEscalation: false
       volumes:
         - name: db-data
           emptyDir: {}
+
