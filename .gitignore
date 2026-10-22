@@ -4,3 +4,11 @@ bin/
 obj/
 .vs/
 node_modules/
+# Terraform working files
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+!*.tfvars.example
