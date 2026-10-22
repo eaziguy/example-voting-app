@@ -29,4 +29,21 @@ jobs:
           scanners: vuln,misconfig,secret
           severity: HIGH,CRITICAL
           format: table
+          output: trivy-results.txt
           exit-code: '0'
+
+      - name: Publish Trivy results in GitHub Actions summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Trivy Security Scan"
+            echo
+            if [ -f trivy-results.txt ]; then
+              echo '```text'
+              cat trivy-results.txt
+              echo '```'
+            else
+              echo "No Trivy results file was generated."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
