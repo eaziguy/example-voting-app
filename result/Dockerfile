@@ -25,8 +25,8 @@ RUN npm ci && \
 COPY --chown=appuser:appuser . .
 
 # Configure the application
-ENV PORT=80
-EXPOSE 80
+ENV PORT=8081
+EXPOSE 8081
 
 # Run as a non-root user
 USER appuser
