@@ -1,65 +1,237 @@
-# Example Voting App
+# Voting App — DevOps Capstone Project
 
-A simple distributed application running across multiple Docker containers.
+A distributed voting application deployed using Docker, Kubernetes, and Helm. This project demonstrates containerization, CI/CD automation, vulnerability scanning, Kubernetes deployment, and release management.
 
-## Getting started
+## Project Overview
 
-Download [Docker Desktop](https://www.docker.com/products/docker-desktop) for Mac or Windows. [Docker Compose](https://docs.docker.com/compose) will be automatically installed. On Linux, make sure you have the latest version of [Compose](https://docs.docker.com/compose/install/).
+The application allows users to vote between two options and displays the results in real time.
 
-This solution uses Python, Node.js, .NET, with Redis for messaging and Postgres for storage.
+The application consists of five services:
 
-Run in this directory to build and run the app:
-
-```shell
-docker compose up
-```
-
-The `vote` app will be running at [http://localhost:8080](http://localhost:8080), and the `results` will be at [http://localhost:8081](http://localhost:8081).
-
-Alternately, if you want to run it on a [Docker Swarm](https://docs.docker.com/engine/swarm/), first make sure you have a swarm. If you don't, run:
-
-```shell
-docker swarm init
-```
-
-Once you have your swarm, in this directory run:
-
-```shell
-docker stack deploy --compose-file docker-stack.yml vote
-```
-
-## Run the app in Kubernetes
-
-The folder k8s-specifications contains the YAML specifications of the Voting App's services.
-
-Run the following command to create the deployments and services. Note it will create these resources in your current namespace (`default` if you haven't changed it.)
-
-```shell
-kubectl create -f k8s-specifications/
-```
-
-The `vote` web app is then available on port 31000 on each host of the cluster, the `result` web app is available on port 31001.
-
-To remove them, run:
-
-```shell
-kubectl delete -f k8s-specifications/
-```
+* **Vote:** Python web application that accepts votes.
+* **Redis:** Stores votes temporarily for processing.
+* **Worker:** Processes votes and stores them in PostgreSQL.
+* **PostgreSQL:** Stores processed voting data.
+* **Result:** Node.js web application that displays voting results.
 
 ## Architecture
 
-![Architecture diagram](architecture.excalidraw.png)
+```text
+                 Voters
+                    |
+                    v
+              Vote Service
+               Port 8080
+                    |
+                    v
+                  Redis
+                    |
+                    v
+             Worker Service
+                    |
+                    v
+               PostgreSQL
+                    ^
+                    |
+              Result Service
+               Port 8081
+                    |
+                    v
+              View Results
+```
 
-* A front-end web app in [Python](/vote) which lets you vote between two options
-* A [Redis](https://hub.docker.com/_/redis/) which collects new votes
-* A [.NET](/worker/) worker which consumes votes and stores them in…
-* A [Postgres](https://hub.docker.com/_/postgres/) database backed by a Docker volume
-* A [Node.js](/result) web app which shows the results of the voting in real time
+## Technology Stack
 
-## Notes
+* Docker and Docker Compose
+* Kubernetes
+* Kind (local Kubernetes cluster)
+* Helm
+* Terraform
+* GitHub Actions
+* Trivy
+* Python
+* Node.js
+* .NET
+* Redis
+* PostgreSQL
 
-The voting application only accepts one vote per client browser. It does not register additional votes if a vote has already been submitted from a client.
+## Running Locally with Docker Compose
 
-This isn't an example of a properly architected perfectly designed distributed app... it's just a simple
-example of the various types of pieces and languages you might see (queues, persistent data, etc), and how to
-deal with them in Docker at a basic level.
+### Prerequisites
+
+Install Docker Desktop, which includes Docker Compose.
+
+### Start the application
+
+From the repository root, run:
+
+```bash
+docker compose up --build
+```
+
+Open the following URLs:
+
+* Voting application: http://localhost:8080
+* Results application: http://localhost:8081
+
+Stop the application with:
+
+```bash
+docker compose down
+```
+
+## Kubernetes Deployment with Helm
+
+The project includes a Helm chart in `voting-app/`.
+
+### Validate the chart
+
+```bash
+helm lint ./voting-app
+```
+
+### Render Kubernetes manifests
+
+```bash
+helm template voting-app ./voting-app
+```
+
+### Deploy the application
+
+```bash
+helm upgrade --install voting-helm ./voting-app --namespace voting-helm --create-namespace
+```
+
+### Access the application
+
+In separate terminals, run:
+
+```bash
+kubectl port-forward -n voting-helm svc/vote 8180:8080
+```
+
+```bash
+kubectl port-forward -n voting-helm svc/result 8181:8081
+```
+
+Open:
+
+* Voting application: http://localhost:8180
+* Results application: http://localhost:8181
+
+### Check deployment status
+
+```bash
+kubectl get pods -n voting-helm
+```
+
+```bash
+helm status voting-helm -n voting-helm
+```
+
+## Security Improvements
+
+The Helm deployment templates include security settings intended to reduce container privileges.
+
+These include:
+
+* Running Vote, Result, and Worker as a non-root user.
+* Disabling privilege escalation for the application containers.
+* Dropping Linux capabilities.
+* Using a read-only root filesystem for Vote, Result, and Worker where configured.
+
+**Note:** The PostgreSQL container requires special consideration because its initialization process needs to manage directory permissions. Database security settings must be tested carefully. The current chart also uses a demonstration database password that should be replaced with a Kubernetes Secret or an appropriate secret-management solution before production use.
+
+## CI/CD and Vulnerability Scanning
+
+GitHub Actions workflows are included in the repository to automate build and security-related tasks.
+
+The project uses Trivy to scan for vulnerabilities, misconfigurations, and exposed secrets.
+
+Workflow status and execution logs are available in the repository's GitHub Actions page.
+
+A successful workflow run confirms that the configured workflow completed successfully; vulnerability findings must still be reviewed separately.
+
+## Helm Release Management and Rollback
+
+Helm maintains revision history for releases, making it possible to return to a previous release configuration.
+
+View release history:
+
+```bash
+helm history voting-helm -n voting-helm
+```
+
+View release status:
+
+```bash
+helm status voting-helm -n voting-helm
+```
+
+Roll back to a previous revision:
+
+```bash
+helm rollback voting-helm 1 -n voting-helm
+```
+
+Replace `1` with the desired revision number after reviewing the history.
+
+**Caution:** A rollback changes the deployed release. Confirm the target revision before running the command.
+
+## Terraform and Cloud Deployment
+
+Terraform is part of the project's infrastructure-as-code toolchain.
+
+The AWS Kubernetes cluster requirement remains a separate outstanding task. The application has been deployed to a local Kind cluster; this does not demonstrate that the AWS infrastructure can be created and destroyed through Terraform.
+
+Cloud deployment should be completed only after AWS credentials, permissions, costs, and infrastructure configuration have been reviewed.
+
+## Current Project Status
+
+Completed or demonstrated:
+
+* Local Kubernetes cluster running the application.
+* Helm chart validation.
+* Helm-based deployment and release history.
+* GitHub Actions workflows.
+* Trivy scanning workflow.
+* Security-related changes to Helm deployment templates.
+
+Remaining work includes:
+
+* Verifying that all security settings are compatible with each container.
+* Reviewing Trivy findings and resolving outstanding high-severity issues.
+* Completing and demonstrating the Terraform-managed AWS infrastructure requirement.
+* Confirming the final documentation and architecture diagram.
+
+## Repository Structure
+
+```text
+.
+├── .github/
+│   └── workflows/
+├── voting-app/
+│   ├── Chart.yaml
+│   ├── values.yaml
+│   └── templates/
+├── vote/
+├── result/
+├── worker/
+├── docker-compose.yml
+└── README.md
+```
+
+The exact repository contents may vary as the project evolves.
+
+## Learning Objectives
+
+This project provides practical experience with:
+
+* Containerizing a multi-service application.
+* Deploying applications to Kubernetes.
+* Managing deployments with Helm.
+* Automating workflows with GitHub Actions.
+* Scanning code and configuration with Trivy.
+* Applying container security settings.
+* Managing release revisions and rollbacks.
+* Understanding infrastructure as code with Terraform.
