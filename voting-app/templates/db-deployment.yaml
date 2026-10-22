@@ -30,7 +30,9 @@ spec:
             - name: db-data
               mountPath: /var/lib/postgresql/data
           securityContext:
-            allowPrivilegeEscalation: false
+            allowPrivilegeEscalation: true
       volumes:
         - name: db-data
           emptyDir: {}
+
+
