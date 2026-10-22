@@ -57,6 +57,7 @@ jobs:
       ### https://github.com/docker/metadata-action#tags-input
       ### defaults to:
       tag-rules: |
+        type=sha,format=long
         type=raw,value=latest,enable=${{ endsWith(github.ref, github.event.repository.default_branch) }}
         type=ref,event=pr
       
